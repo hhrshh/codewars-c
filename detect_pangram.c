@@ -17,11 +17,9 @@ bool is_pangram(const char *str_in)
     uint32_t mask = 0;
     for (int i = 0; str_in[i] != 0; ++i)
         if(str_in[i] >= 65 && str_in[i] <= 90 || str_in[i] >= 97 && str_in[i] <= 122)
-            mask = (1 << (((str_in[i] | (1 << 5)) - (1 << 5)) - (1 << 6))) | mask;                      
+            mask = (1 << (((str_in[i] | (1 << 5)) - (1 << 5)) - (1 << 6))) | mask;
     return mask == 134217726;
 }
-
-
 
 int main(void)
 {

@@ -2,7 +2,6 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdbool.h>
 
 // An isogram is a word that has no repeating letters,
 // consecutive or non-consecutive. Implement a function that determines whether a string that contains only letters is an isogram.
@@ -17,14 +16,21 @@
 
 bool IsIsogram(const char *string) 
 {
-	return false;
+    uint32_t mask = 0, pre_mask = 0;
+    for(int i = 0; string[i] != 0; ++i, pre_mask = mask)
+    {
+        mask = 1 << ((string[i] | (1 << 5)) - 97) | mask;
+        if(mask == pre_mask)
+           return false;
+    }
+    return true;
 }
 
 
 
 int main(void)
 {
-    char* isogram = "Dermatoglyphics"; 
+    char* isogram = "moOse"; 
     printf("%s\n", IsIsogram(isogram) ? "Yes" : "No");
     return 0;
 }

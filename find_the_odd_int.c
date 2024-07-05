@@ -18,12 +18,12 @@
 
 int find_odd (size_t length, const int array[length])
 {
-  int odd_int = 0;
+  int xor = 0;
 
   for (size_t i = 0; i < length; i++)
-    odd_int ^= array[i];
+    xor ^= array[i];
 
-  return odd_int;
+  return xor;
 }
 
 

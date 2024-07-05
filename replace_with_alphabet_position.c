@@ -17,7 +17,7 @@ char *alphabet_position(const char *text)
 {
     char *str = NULL;
     int j = 0;
-    str = (char*)malloc(sizeof(char) * strlen(text) * 2 + 1);
+    str = (char*)malloc(sizeof(char) * strlen(text) * 3 + 1);
     str[0] = '\0';
     for(int i = 0; text[i] != 0; ++i)
     {

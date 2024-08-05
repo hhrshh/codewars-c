@@ -23,14 +23,12 @@ char *rot13(const char *src)
     buf = (char*)malloc(sizeof(char) * strlen(src) + 1);
     int i = 0;
     for(; src[i]; ++i)
-    {
         if(src[i] >= 'A' && src[i] <= 'M' || src[i] >= 'a' && src[i] <= 'm')
             buf[i] = src[i] + 13;
         else if(src[i] >= 'N' && src[i] <= 'Z' || src[i] >= 'n' && src[i] <= 'z')
             buf[i] = src[i] - 13;
         else
             buf[i] = src[i];
-    }
     buf[++i] = '\0';
     return buf;
 }
@@ -39,7 +37,7 @@ char *rot13(const char *src)
 
 int main(void)
 {
-    char* src = "wab"; 
+    char* src = "In the elevators, the extrovert looks at the OTHER guy's shoes."; 
     printf("%s\n", rot13(src));
     return 0;
 }

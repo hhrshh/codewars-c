@@ -45,22 +45,19 @@ enum game_state check_game_state(const enum square board[3][3])
 {   
     int state = 0;
 
-    // checking horizontal values
+    // checking horizontal and vertical values
     for(int j = 1; j < 3; ++j)
     {
         for(int i = 0; i < 3; ++i)
         {
             if(board[i][0] == board[i][1] && board[i][0] == board[i][2] && board[i][0] == j)
                 return j;
-            for(int k = 0; k < 3; ++k)
-                if(!board[i][k])
-                    state = -1;
-        }
-
-    // checking vertical values
-        for(int i = 0; i < 3; ++i)
             if(board[0][i] == board[1][i] && board[0][i] == board[2][i] && board[0][i] == j)
                 return j;
+            for(int k = 0; k < 3; ++k)
+                if(!board[i][k] && j < 2)
+                    state = -1;
+        }
     
     // checking diagonally values 
         if(board[0][0] == board[1][1] && board[0][0] == board[2][2] && board[0][0] == j)
@@ -87,9 +84,9 @@ void game_show(const enum square board[3][3])
 
 int main(void)
 {
-    enum square board[3][3] = {{O, EMPTY, X},
+    enum square board[3][3] = {{O, X, X},
                                {X, O, O},
-                               {X, O, EMPTY}};
+                               {X, O, X}};
 
     game_show(board);
     

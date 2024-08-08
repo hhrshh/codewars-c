@@ -17,14 +17,14 @@
 
 char *human_readable_time(unsigned seconds, char *time_string)
 {
-	time_string = '\0'; // write to time_string
-	return time_string; // return it
+    snprintf(time_string, 9, "%02d:%02d:%02d", seconds / 3600, seconds % 3600 / 60, seconds % 3600 % 60);
+	return time_string;
 }
 
 int main(void)
 {
-    unsigned seconds = 359999;
-    char *time_string;
+    unsigned seconds = 86400;
+    char time_string[9];
 
     printf("%s\n", human_readable_time(seconds, time_string));
     return 0;

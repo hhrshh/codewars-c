@@ -18,16 +18,64 @@
 
 char *multiply (const char *a, const char *b)
 {
-// return a heap-allocated string
-  return calloc(1, 1);
+  int ia = strlen(a);
+  int ib = strlen(b);
+  int num = ia + ib;
+  char *str = NULL;
+  int flag = 0;
+
+  str = (char*)calloc(sizeof(char) * num + 1, sizeof(char));
+  --ia;
+  --ib;
+  num = num - 1;
+  
+  // multiplay
+  for (int i = ia, ik = 0, j = ib, ij = 0 ;i >= 0; --i, ++ik)
+  {
+    for (j = ib, ij = 0; j >= 0; --j, ++ij)
+    {
+      str[num - ik - ij] += (a[i]-48) * (b[j]-48) + flag;
+      flag = 0;
+      if(str[num - ik - ij] > 9)
+      {
+        flag = str[num - ik - ij] / 10;
+        str[num - ik - ij] = str[num - ik - ij] % 10;
+      }
+    }
+    str[num - ik - ij] = flag;
+    flag = 0;
+  }
+
+  
+  // removing 0, 000132 => 123
+  for(int i = 0, j = 0; i <= num; ++i)
+  {
+    if(str[i] == 0 && i == num)
+      num = 0;
+    if(str[i] == 0)
+      continue;
+    else if(i > 0)
+      for(num = num - i; j <= num; ++j, ++i)
+        str[j] = str[i];
+    break;
+  }
+
+  str[num + 1] = '\0';
+
+  // int => char
+  for(int i = 0; i <= num; ++i)
+    str[i] += 48;
+
+
+  return str;
 }
 
 int main(void)
 {
 
-    char a[] = '98765';
-    char b[] = '56894';
-    char *actual = multiply(a, b);
+  char a[] = "09";
+  char b[] = "09";
+  printf("%s\n", multiply(a, b));
     
-    return 0;
+  return 0;
 }

@@ -3,6 +3,8 @@
         "stdbool.h": "c",
         "string.h": "c",
         "ctype.h": "c",
-        "in.h": "c"
+        "in.h": "c",
+        "stdlib.h": "c",
+        "stdint.h": "c"
     }
 }

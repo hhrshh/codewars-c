@@ -5,8 +5,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <ctype.h>
-#define ERR_BUFF_SIZE 4096
 
+#define HEIGHT 3
+#define WIDTH 3
 
 // That's terrible! Some evil korrigans have abducted you during your sleep and threw you into a maze of thorns in the scrubland D:
 // But have no worry, as long as you're asleep your mind is floating freely in the sky above your body.
@@ -44,7 +45,6 @@
 // Aside from having no escape route the mazes will all be valid (they all contain one and only one "body"
 // character and no other characters than the body, "#" and " ". Besides, the map will always be rectangular, you don't have to check that either)
 
-
 /*
 ** @param maze a valid Maze* (see description) with consistent height, width and grid.
 ** Note: maze->grid[0][0] is the top left-hand corner and maze->grid[maze->height - 1][maze->width - 1] is the bottom right-hand corner.
@@ -55,33 +55,107 @@
 
 typedef struct s_Maze
 {
-    unsigned height, width;
-    char** grid;
-}   Maze;
+  unsigned height; // Высота лабиринта
+  unsigned width;  // Ширина лабиринта
+  char **grid;     // Двумерный массив для хранения символов лабиринта
+} Maze;
 
-
-char *escape(const Maze *maze)
+// Функция для создания лабиринта
+Maze *createMaze(unsigned height, unsigned width)
 {
-  char *path;
-  const char *my_answer = "FLFRFBFFFF";
-
-  if(maze->grid == NULL) 
+  Maze *maze = malloc(sizeof(Maze)); // Выделяем память под структуру
+  if (!maze)
+  {
+    fprintf(stderr, "Ошибка выделения памяти под лабиринт\n");
     return NULL;
-  
+  }
+
+  maze->height = height;
+  maze->width = width;
+
+  // Выделение памяти для строк (высоты) массива grid
+  maze->grid = malloc(height * sizeof(char *));
+  if (!maze->grid)
+  {
+    fprintf(stderr, "Ошибка выделения памяти под строки лабиринта\n");
+    free(maze); // Освобождаем память под структуру, если не удалось выделить память под grid
+    return NULL;
+  }
+
+  // Выделение памяти для каждого столбца (ширины) массива grid
+  for (unsigned i = 0; i < height; i++)
+  {
+    maze->grid[i] = malloc(width * sizeof(char));
+    if (!maze->grid[i])
+    {
+      fprintf(stderr, "Ошибка выделения памяти под столбцы лабиринта\n");
+      // Освобождаем ранее выделенную память
+      for (unsigned j = 0; j < i; j++)
+        free(maze->grid[j]);
+      free(maze->grid);
+      free(maze);
+      return NULL;
+    }
+  }
+
+  return maze;
+}
+
+// Функция для заполнения лабиринта
+void fillMaze(Maze *maze, char fillChar[HEIGHT][WIDTH])
+{
+  for (unsigned i = 0; i < maze->height; ++i)
+    for (unsigned j = 0; j < maze->width; ++j)
+      maze->grid[i][j] = fillChar[i][j]; // Заполняем лабиринт символом fillChar
+}
+
+// Функция для вывода лабиринта на экран
+void printMaze(Maze *maze)
+{
   printf("Maze(w: %u, h: %u):\n", maze->width, maze->height);
   for (unsigned int i = 0; i < maze->height; ++i)
     printf("\"%s\"\n", maze->grid[i]);
   printf("\n");
+}
+
+// Функция для освобождения памяти
+void freeMaze(Maze *maze)
+{
+  for (unsigned i = 0; i < maze->height; i++)
+    free(maze->grid[i]); // Освобождаем память под каждый столбец
+  free(maze->grid); // Освобождаем память под массив grid
+  free(maze);       // Освобождаем память под саму структуру Maze
+}
+
+char *escape(const Maze *maze)
+{
+  char *path = NULL;
+  char *my_answer = "FLFRFBFFFF";
+
+  if(maze->grid == NULL)
+    return NULL;
+
+
   // Remember that path must be heap-allocated (otherwise you can't safely return it)
   path = (char*)calloc(strlen(my_answer) + 1, sizeof(char));
-  if (path == NULL)
+  if(path == NULL)
     return NULL;
   return strcpy(path, my_answer);
 }
 
-
-
 int main(void)
 {
-    return 0;
+  unsigned height = HEIGHT, width = WIDTH;
+  char fillChar[HEIGHT][WIDTH] = {{'#',' ','#'},
+                                  {' ','>',' '},
+                                  {'#',' ','#'}};
+  Maze *maze = createMaze(height, width); // Создаем лабиринт
+  if (!maze)
+    return 1; // Выход в случае ошибки создания лабиринта
+
+  fillMaze(maze, fillChar); // Заполняем лабиринт
+  printMaze(maze);     // Выводим лабиринт на экран
+  printf("%s\n", escape(maze)); // Выводим выход из лабиринта
+  freeMaze(maze); // Освобождаем память
+  return 0;
 }

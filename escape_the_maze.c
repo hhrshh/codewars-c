@@ -146,7 +146,7 @@ char *escape(const Maze *maze)
 int main(void)
 {
   unsigned height = HEIGHT, width = WIDTH;
-  char fillChar[HEIGHT][WIDTH] = {{'#',' ','#'},
+  char fillChar[HEIGHT][WIDTH] = {{'#',' ','#'}, // Карта лабиринта
                                   {' ','>',' '},
                                   {'#',' ','#'}};
   Maze *maze = createMaze(height, width); // Создаем лабиринт

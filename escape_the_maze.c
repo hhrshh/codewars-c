@@ -81,7 +81,7 @@ Maze *createMaze(unsigned height, unsigned width)
     free(maze); // Освобождаем память под структуру, если не удалось выделить память под grid
     return NULL;
   }
-
+//
   // Выделение памяти для каждого столбца (ширины) массива grid
   for (unsigned i = 0; i < height; i++)
   {
@@ -122,8 +122,8 @@ void printMaze(Maze *maze)
 
 char *go(const Maze *maze, int x, int y, char z, char *way)
 {
-  
-  path = (char*)calloc(strlen(my_answer) + 1, sizeof(char));
+  char *path = NULL;
+  path = (char*)malloc(254 * sizeof(char));
   // идем вперед
   if(maze->grid[x][++y] == ' ')
     go();

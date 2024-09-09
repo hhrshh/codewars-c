@@ -74,7 +74,7 @@ int main(void)
 {
 
   char a[] = "09";
-  char b[] = "09";
+  char b[] = "0000009";
   printf("%s\n", multiply(a, b));
     
   return 0;

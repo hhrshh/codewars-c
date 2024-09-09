@@ -54,35 +54,26 @@
 ** Note: It is not strictly necessary to null terminate that array of char, but  I recommend doing so,
 ** both for good practice and to avoid a segfault in my validator if your solution doesn't reach the exit.
 */
-#define LEFT(dir) ((dir) == '^' ? 'L' : \
-                   (dir) == '<' ? 'F' : \
-                   (dir) == '>' ? 'B' : \
-                   (dir) == 'v' ? 'R' : \
-                    ' ')
-#define  RIGHT(dir) ((dir) == '^' ? 'R' : \
-                     (dir) == '<' ? 'B' : \
-                     (dir) == '>' ? 'F' : \
-                     (dir) == 'v' ? 'L' : \
-                      ' ')
-#define  TOP(dir) ((dir) == '^' ? 'F' : \
-                   (dir) == '<' ? 'R' : \
-                   (dir) == '>' ? 'L' : \
-                   (dir) == 'v' ? 'B' : \
-                    ' ')
-#define  BOTTOM(dir) ((dir) == '^' ? 'B' : \
-                      (dir) == '<' ? 'L' : \
-                      (dir) == '>' ? 'R' : \
-                      (dir) == 'v' ? 'F' : \
-                       ' ')
-
-
-
-typedef struct s_Maze
-{
-  unsigned height; // Высота лабиринта
-  unsigned width;  // Ширина лабиринта
-  char **grid;     // Двумерный массив для хранения символов лабиринта
+typedef struct {
+    unsigned height; // Высота лабиринта
+    unsigned width;  // Ширина лабиринта
+    char **grid;     // Сетка лабиринта
 } Maze;
+
+typedef struct {
+    int x, y; // Текущая позиция
+    int dir;  // Текущее направление (0: вверх, 1: вправо, 2: вниз, 3: влево)
+    char *moves; // Движения, сделанные для достижения этой позиции
+} State;
+
+// Массив направлений
+const int directions[4][2] = {
+    {-1, 0}, // Вверх
+    {0, 1},  // Вправо
+    {1, 0},  // Вниз
+    {0, -1}  // Влево
+};
+
 
 // Функция для создания лабиринта
 Maze *createMaze(unsigned height, unsigned width)
@@ -143,175 +134,90 @@ void printMaze(Maze *maze)
 
 //----------------------------------------------------------------------------------------------------------------------------- Рекурсивная функция
 
-void go(Maze *way, unsigned x, unsigned y, char *z, int i, int *f)
-{
-  int shift = 0;
-  if(x == 0 || y == 0 || x == way->height - 1 || y == way->width - 1) // если мы на краю лабиринта выходим
-  {
-    z[i] = '\0';
-    *f = 1;
-    return;
-  }
-  int fl = 0, fr = 0, ft = 0, fb = 0;
-  // идем вправо
-  if(way->grid[x][y + 1] == ' ' && f != 0)
-  {
-    way->grid[x][y + 1] = '>';
-    fr = 1;
-  }
-  // идем влево
-  if(way->grid[x][y - 1] == ' '  && f != 0)
-  {
-    way->grid[x][y - 1] = '<';
-    fl = 1;
-  }
-  // идем вверх
-  if(way->grid[x - 1][y] == ' '  && f != 0)
-  {
-    way->grid[x - 1][y] = '^';
-    ft = 1;
-  }
-  // идем вниз
-  if(way->grid[x + 1][y] == ' '  && f != 0)
-  {
-    way->grid[x + 1][y] = 'v';
-    fb = 1;
-  }
-  
-  if(fr && f != 0)// вправо
-  {
-    z[i] = RIGHT(way->grid[x][y]);
-    if(z[i] != 'F')
-    {
-      shift =  1;
-      z[i + shift] = 'F';
+// Функция для побега из лабиринта
+char* escape(Maze *maze) {
+    // Находим начальную позицию и направление
+    int startX, startY, startDir;
+    for (unsigned i = 0; i < maze->height; i++) {
+        for (unsigned j = 0; j < maze->width; j++) {
+            if (maze->grid[i][j] == '^') {
+                startX = i; startY = j; startDir = 0; // Вверх
+            } else if (maze->grid[i][j] == '>') {
+                startX = i; startY = j; startDir = 1; // Вправо
+            } else if (maze->grid[i][j] == 'v') {
+                startX = i; startY = j; startDir = 2; // Вниз
+            } else if (maze->grid[i][j] == '<') {
+                startX = i; startY = j; startDir = 3; // Влево
+            }
+        }
     }
-    go(way, x, y + 1, z, i + 1 + shift, f);
-    shift = 0;
-  }
 
-  if(fl && f != 0)// влево
-  {
-    z[i] = LEFT(way->grid[x][y]);
-    if(z[i] != 'F')
-    {
-      shift = 1;
-      z[i + shift] = 'F';
+    // Настройка BFS
+    State *queue = malloc(maze->height * maze->width * 4 * sizeof(State));
+    int front = 0, back = 0;
+    char **visited = malloc(maze->height * sizeof(char*));
+    for (unsigned i = 0; i < maze->height; i++) {
+        visited[i] = calloc(maze->width * 4, sizeof(char)); // 4 направления
     }
-    go(way, x, y - 1, z, i + 1 + shift, f);
-    shift = 0;
-  }
 
-  if(ft && f != 0)// вверх
-  {
-    z[i] = TOP(way->grid[x][y]);
-    if(z[i] != 'F')
-    {
-      shift = 1;
-      z[i + shift] = 'F';
+    // Начальное состояние
+    queue[back++] = (State){startX, startY, startDir, ""};
+    visited[startX][startY * 4 + startDir] = 1;
+
+    // Основной цикл BFS
+    while (front < back) {
+        State current = queue[front++];
+        
+        // Проверяем, находимся ли мы на краю лабиринта
+        if (current.x == 0 || current.x == maze->height - 1 || current.y == 0 || current.y == maze->width - 1) {
+            return strdup(current.moves); // Возвращаем последовательность движений
+        }
+
+        // Двигаемся вперед
+        int newX = current.x + directions[current.dir][0];
+        int newY = current.y + directions[current.dir][1];
+        if (newX >= 0 && newX < maze->height && newY >= 0 && newY < maze->width && maze->grid[newX][newY] == ' ' && !visited[newX][newY * 4 + current.dir]) {
+            visited[newX][newY * 4 + current.dir] = 1;
+            char *newMoves = malloc(strlen(current.moves) + 2);
+            sprintf(newMoves, "%sF", current.moves);
+            queue[back++] = (State){newX, newY, current.dir, newMoves};
+        }
+
+        // Поворот налево
+        int leftDir = (current.dir + 3) % 4;
+        if (!visited[current.x][current.y * 4 + leftDir]) {
+            visited[current.x][current.y * 4 + leftDir] = 1;
+            char *newMoves = malloc(strlen(current.moves) + 2);
+            sprintf(newMoves, "%sL", current.moves);
+            queue[back++] = (State){current.x, current.y, leftDir, newMoves};
+        }
+
+        // Поворот направо
+        int rightDir = (current.dir + 1) % 4;
+        if (!visited[current.x][current.y * 4 + rightDir]) {
+            visited[current.x][current.y * 4 + rightDir] = 1;
+            char *newMoves = malloc(strlen(current.moves) + 2);
+            sprintf(newMoves, "%sR", current.moves);
+            queue[back++] = (State){current.x, current.y, rightDir, newMoves};
+        }
+
+        // Поворот назад
+        int backDir = (current.dir + 2) % 4;
+        if (!visited[current.x][current.y * 4 + backDir]) {
+            visited[current.x][current.y * 4 + backDir] = 1;
+            char *newMoves = malloc(strlen(current.moves) + 2);
+            sprintf(newMoves, "%sB", current.moves);
+            queue[back++] = (State){current.x, current.y, backDir, newMoves};
+        }
     }
-    go(way, x - 1, y, z, i + 1 + shift, f);
-    shift = 0;
-  }
 
-  if(fb && f != 0)// вниз
-  {
-    z[i] = BOTTOM(way->grid[x][y]);
-    if(z[i] != 'F')
-    {
-      shift = 1;
-      z[i + shift] = 'F';
+    // Освобождаем память
+    for (unsigned i = 0; i < maze->height; i++) {
+        free(visited[i]);
     }
-    go(way, x + 1, y, z, i + 1 + shift, f);
-    shift = 0;
-  }
-  
-  return;
-}
-
-//---------------------------------------------------------------------------------------------------------------------------- Функция показывает выход из лабиринта
-char *escape(const Maze *maze)
-{
-  int static flag = 0;
-  if(maze->grid == NULL)
-    return NULL;
-
-  unsigned pos_x = 0, pos_y = 0; // начальные координаты
-  char *pos_z = NULL;
-  pos_z = (char*)malloc(254 * sizeof(char *)); // напрявление
-  if(pos_z == NULL)
-    fprintf(stderr, "Ошибка выделения памяти\n"); 
-  char *path = NULL;
-  Maze *way = malloc(sizeof(Maze)); // Выделяем память для копии структуры
-  if (!way)
-  {
-    fprintf(stderr, "Ошибка выделения памяти под лабиринт\n");
-    return NULL;
-  }
-
-  way->height = maze->height;
-  way->width = maze->width;
-
-  // Выделение памяти для строк (высоты) массива grid
-  way->grid = malloc(maze->height * sizeof(char *));
-  if (!way->grid)
-  {
-    fprintf(stderr, "Ошибка выделения памяти под строки лабиринта\n");
-    free(way); // Освобождаем память под структуру, если не удалось выделить память под grid
-    return NULL;
-  }
-  // Выделение памяти для каждого столбца (ширины) массива grid
-  for (unsigned i = 0; i < maze->height; i++)
-  {
-    way->grid[i] = malloc(maze->width * sizeof(char));
-    if (!way->grid[i])
-    {
-      fprintf(stderr, "Ошибка выделения памяти под столбцы лабиринта\n");
-      // Освобождаем ранее выделенную память
-      for (unsigned j = 0; j < i; j++)
-        free(way->grid[j]);
-      free(way->grid);
-      free(way);
-      return NULL;
-    }
-  }
-
-  
-
-  // Ищем положение и копирем лабиринт из структуры во временный буфер way[][]
-  for (unsigned i = 0; i < maze->height; ++i)
-    for (unsigned j = 0; j < maze->width; ++j)
-    {
-      way->grid[i][j] = maze->grid[i][j]; // копируем в буфер
-      if(maze->grid[i][j] == '^' || maze->grid[i][j] == '>' || maze->grid[i][j] == 'v' || maze->grid[i][j] == '<')
-      {
-        pos_x = i;
-        pos_y = j;
-        pos_z[0] = maze->grid[i][j];
-      }
-    }
-  go(way, pos_x, pos_y, pos_z, 0, &flag);
-
-  // печатаем что получилось
-   printf("Maze(w: %u, h: %u):\n", maze->width, maze->height);
-  for (unsigned int i = 0; i < maze->height; ++i)
-    printf("\"%s\"\n", way->grid[i]);
-  printf("\n");
-
-// Функция для освобождения памяти
-
-
-  for (unsigned i = 0; i < way->height; i++)
-    free(way->grid[i]); // Освобождаем память под каждый столбец
-  free(way->grid); // Освобождаем память под массив grid
-  free(way);       // Освобождаем память под саму структуру Maze
-
-  // Remember that path must be heap-allocated (otherwise you can't safely return it)
-  path = (char*)calloc(strlen(pos_z) + 1, sizeof(char)); // <---------------------------------вход
-  if(!flag)
-    return NULL;
-  strcpy(path, pos_z);
-  return path;
+    free(visited);
+    free(queue);
+    return NULL; // Выход не найден
 }
 //---------------------------------------------------------------------------------------------------------------------------- Функция показывает выход из лабиринта
 
@@ -408,7 +314,3 @@ int main(void)
 //                                   {'#','#','#','#','#','#','#','#',' ','#'}};
 // #define HEIGHT 3
 // #define WIDTH 10
-
-
-
-

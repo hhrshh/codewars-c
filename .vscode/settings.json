@@ -6,6 +6,8 @@
         "in.h": "c",
         "stdlib.h": "c",
         "stdint.h": "c",
-        "type_traits": "c"
-    }
+        "type_traits": "c",
+        "limits": "c"
+    },
+    "C_Cpp.errorSquiggles": "enabled"
 }
